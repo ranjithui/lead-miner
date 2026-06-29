@@ -1,0 +1,13 @@
+{
+  "name": "leadminer",
+  "version": "2.0.0",
+  "private": true,
+  "description": "B2B email finder — crawls public pages + web search for real contact emails",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node server/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/", "destination": "/leadminer-v2.html" }
+  ],
+  "functions": {
+    "api/find.js": { "maxDuration": 60 }
+  }
+}
