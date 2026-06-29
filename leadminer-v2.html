@@ -230,6 +230,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
       <div class="progress-stats">
         Processed: <span id="pDone">0</span> &nbsp;·&nbsp;
         Emails found: <span id="pFound">0</span> &nbsp;·&nbsp;
+        No result: <span id="pNone">0</span> &nbsp;·&nbsp;
         High conf: <span id="pVerified">0</span> &nbsp;·&nbsp;
         Remaining: <span id="pLeft">0</span>
       </div>
@@ -246,7 +247,8 @@ tr:hover td{background:rgba(255,255,255,0.02);}
   <div class="stats-row" id="statsRow">
     <div class="stat-card"><div class="stat-val" id="statTotal" style="color:var(--accent)">0</div><div class="stat-label">Emails found</div></div>
     <div class="stat-card"><div class="stat-val" id="statVerified" style="color:var(--success)">0</div><div class="stat-label">High confidence</div></div>
-    <div class="stat-card"><div class="stat-val" id="statCo" style="color:#a78bfa">0</div><div class="stat-label">Companies</div></div>
+    <div class="stat-card"><div class="stat-val" id="statCo" style="color:#a78bfa">0</div><div class="stat-label">Domains processed</div></div>
+    <div class="stat-card"><div class="stat-val" id="statNone" style="color:var(--danger)">0</div><div class="stat-label">No result found</div></div>
     <div class="stat-card"><div class="stat-val" id="statConf" style="color:var(--warning)">0%</div><div class="stat-label">Avg confidence</div></div>
   </div>
 
@@ -271,6 +273,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 <script>
 const API='/api/find'; // backend (server/server.js). Falls back to absolute if opened cross-origin.
 let allResults=[], csvRows=[], csvHeaders=[], activeTab='single';
+let bulkSummary=null; // {processed,withResult,noResult,emails} — set during bulk run, written into CSV
 
 function switchTab(t){
   activeTab=t;
@@ -382,8 +385,9 @@ async function startBulk(){
   document.getElementById('bulkBtn').disabled=true;
   document.getElementById('progressWrap').classList.add('show');
   const total=csvRows.length;
-  let done=0,found=0,verified=0;
+  let done=0,found=0,verified=0,noResult=0;
   allResults=[];
+  bulkSummary={processed:0,withResult:0,noResult:0,emails:0};
   for(const row of csvRows){
     const co=row[ci]||'';
     const nm=ni!==''?(row[ni]||''):'';
@@ -391,8 +395,8 @@ async function startBulk(){
     if(!co.trim()){done++;continue;}
     showStatus('Processing: '+co);
     const emails=await processRow(co,nm,dm);
-    emails.forEach(e=>{allResults.push(e);found++;if(e.status==='high')verified++;});
-    if(emails.length>0)addCard(emails[0]);
+    emails.forEach(e=>{allResults.push(e);found++;if(e.status==='high')verified++;addCard(e);});
+    if(!emails.length)noResult++;
     done++;
     const pct=Math.round((done/total)*100);
     document.getElementById('progressFill').style.width=pct+'%';
@@ -400,17 +404,19 @@ async function startBulk(){
     document.getElementById('progressLabel').textContent='Processing: '+co;
     document.getElementById('pDone').textContent=done;
     document.getElementById('pFound').textContent=found;
+    document.getElementById('pNone').textContent=noResult;
     document.getElementById('pVerified').textContent=verified;
     document.getElementById('pLeft').textContent=total-done;
     await delay(55);
   }
   hideStatus();
-  document.getElementById('progressLabel').textContent='✓ Complete — '+done+' companies processed';
+  bulkSummary={processed:done,withResult:done-noResult,noResult,emails:allResults.length};
+  document.getElementById('progressLabel').textContent='✓ Complete — '+done+' domains processed, '+noResult+' with no result';
   document.getElementById('bulkBtn').disabled=false;
-  updateStats(allResults,done);
+  updateStats(allResults,done,noResult);
   document.getElementById('resultsHeader').classList.add('show');
   document.getElementById('resultsTitle').textContent='Bulk results';
-  document.getElementById('resultsCount').textContent=allResults.length+' emails from '+done+' companies';
+  document.getElementById('resultsCount').textContent=allResults.length+' emails · '+done+' domains processed · '+noResult+' no result';
 }
 
 // ── Core engine — calls the real backend scraper ────────────
@@ -473,17 +479,19 @@ function addCard(item){
   list.appendChild(card);
   requestAnimationFrame(()=>{card.style.opacity='1';card.style.transform='translateY(0)';});
 }
-function updateStats(emails,cos){
+function updateStats(emails,cos,noResult){
   const v=emails.filter(e=>e.status==='high').length;
   const avg=emails.length?Math.round(emails.reduce((s,e)=>s+e.confidence,0)/emails.length):0;
   document.getElementById('statTotal').textContent=emails.length;
   document.getElementById('statVerified').textContent=v;
   document.getElementById('statCo').textContent=cos;
+  document.getElementById('statNone').textContent=noResult||0;
   document.getElementById('statConf').textContent=avg+'%';
   document.getElementById('statsRow').classList.add('show');
 }
 function clearResults(){
   allResults=[];
+  bulkSummary=null;
   document.getElementById('emailList').innerHTML='';
   document.getElementById('emptyState').classList.remove('show');
   document.getElementById('resultsHeader').classList.remove('show');
@@ -494,7 +502,16 @@ function clearResults(){
 // ── Export ───────────────────────────────────────────────────
 function exportCSV(){
   if(!allResults.length)return;
-  const rows=[['Company','Email','Found/Guess','Confidence','Domain','Type','Source','SourceURL']];
+  const rows=[];
+  if(bulkSummary){
+    rows.push(['Summary','']);
+    rows.push(['Domains processed',bulkSummary.processed]);
+    rows.push(['Domains with result',bulkSummary.withResult]);
+    rows.push(['Domains with no result',bulkSummary.noResult]);
+    rows.push(['Total emails found',bulkSummary.emails]);
+    rows.push(['','']); // blank separator
+  }
+  rows.push(['Company','Email','Found/Guess','Confidence','Domain','Type','Source','SourceURL']);
   allResults.forEach(e=>rows.push([e.sourceCompany||'',e.email,e.real?'Found':'Guess',e.confidence+'%',e.domain||'',e.type||'',e.source||'',e.sourceUrl||'']));
   const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');
