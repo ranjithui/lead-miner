@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LeadMiner v2 — Bulk B2B Email Finder</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#0a0e1a;--surface:#111827;--surface2:#1a2235;--border:#1e2d45;
+  --accent:#00e5ff;--accent2:#7c3aed;--text:#f0f4ff;--muted:#6b7fa3;
+  --success:#10b981;--warning:#f59e0b;--danger:#ef4444;
+  --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:10px;}
+.logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.logo-text{font-size:17px;font-weight:700;}
+.logo-text span{color:var(--accent);}
+.badge{background:rgba(0,229,255,0.1);color:var(--accent);border:1px solid rgba(0,229,255,0.3);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:.5px;}
+.main{max-width:960px;margin:0 auto;padding:32px 20px;}
+.hero{text-align:center;margin-bottom:28px;}
+.hero h1{font-size:30px;font-weight:700;line-height:1.2;margin-bottom:8px;}
+.hero h1 span{color:var(--accent);}
+.hero p{color:var(--muted);font-size:14px;}
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:18px;}
+.tab{flex:1;padding:10px;text-align:center;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;color:var(--muted);border:none;background:transparent;font-family:var(--font);transition:all .2s;}
+.tab.active{background:var(--accent);color:#0a0e1a;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:18px;}
+.input-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.input-wrap{position:relative;flex:1;min-width:170px;}
+.input-wrap input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:var(--font);font-size:14px;padding:11px 13px 11px 40px;outline:none;transition:border .2s;}
+.input-wrap input:focus{border-color:var(--accent);}
+.input-wrap input::placeholder{color:var(--muted);}
+.input-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--muted);}
+.btn{border-radius:9px;font-family:var(--font);font-size:14px;font-weight:700;padding:11px 22px;cursor:pointer;border:none;transition:opacity .2s,transform .1s;}
+.btn-primary{background:var(--accent);color:#0a0e1a;}
+.btn-primary:hover{opacity:.88;}
+.btn-primary:active{transform:scale(.98);}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text);}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.options-row{display:flex;gap:14px;flex-wrap:wrap;}
+.opt{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer;}
+.opt input{accent-color:var(--accent);width:13px;height:13px;}
+/* Upload */
+.upload-zone{border:2px dashed var(--border);border-radius:11px;padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(0,229,255,0.04);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:36px;margin-bottom:10px;}
+.upload-title{font-size:15px;font-weight:600;margin-bottom:5px;}
+.upload-sub{font-size:13px;color:var(--muted);margin-bottom:14px;}
+.btn-browse{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:7px 18px;font-size:13px;font-family:var(--font);cursor:pointer;pointer-events:none;}
+/* Column mapper */
+.col-map{margin-top:16px;background:var(--surface2);border-radius:9px;padding:14px;display:none;}
+.col-map.show{display:block;}
+.col-map-title{font-size:11px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;}
+.col-map-row{display:flex;gap:10px;flex-wrap:wrap;}
+.col-map-item{display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px;}
+.col-map-label{font-size:11px;color:var(--muted);}
+select{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:7px 10px;font-family:var(--font);font-size:13px;outline:none;width:100%;}
+select:focus{border-color:var(--accent);}
+/* Preview */
+.csv-preview{margin-top:16px;display:none;}
+.csv-preview.show{display:block;}
+.preview-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.preview-title{font-size:14px;font-weight:600;}
+.preview-sub{font-size:11px;color:var(--muted);}
+.table-wrap{overflow-x:auto;border-radius:9px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead{background:var(--surface2);}
+th{padding:9px 13px;text-align:left;color:var(--muted);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);}
+td{padding:8px 13px;border-bottom:1px solid var(--border);color:var(--text);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,0.02);}
+/* Progress */
+.progress-wrap{margin-top:18px;display:none;}
+.progress-wrap.show{display:block;}
+.progress-head{display:flex;justify-content:space-between;margin-bottom:7px;font-size:13px;}
+.progress-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .3s;}
+.progress-stats{display:flex;gap:14px;margin-top:8px;font-size:11px;color:var(--muted);flex-wrap:wrap;}
+.progress-stats span{color:var(--text);font-weight:600;}
+/* Status */
+.status-bar{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:11px 15px;margin-bottom:14px;display:none;align-items:center;gap:10px;font-size:12px;}
+.status-bar.show{display:flex;}
+.spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.status-text{color:var(--muted);flex:1;}
+/* Stats */
+.stats-row{display:none;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:9px;margin-bottom:18px;}
+.stats-row.show{display:grid;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:13px 15px;}
+.stat-val{font-size:20px;font-weight:700;margin-bottom:2px;}
+.stat-label{font-size:10px;color:var(--muted);}
+/* Results */
+.results-header{display:none;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.results-header.show{display:flex;}
+.results-title{font-size:14px;font-weight:600;}
+.email-list{display:flex;flex-direction:column;gap:7px;}
+.email-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 16px;display:flex;align-items:center;gap:12px;transition:border-color .2s;}
+.email-card:hover{border-color:rgba(0,229,255,.25);}
+.email-card.high{border-left:3px solid var(--success);}
+.email-card.medium{border-left:3px solid var(--warning);}
+.email-card.low{border-left:3px solid var(--danger);opacity:.6;}
+.email-main{flex:1;min-width:0;}
+.email-company{font-size:10px;color:var(--muted);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.email-addr{font-family:var(--mono);font-size:13px;font-weight:500;margin-bottom:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.email-meta{font-size:10px;color:var(--muted);}
+.tag{font-size:9px;font-weight:700;padding:2px 6px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;}
+.tag-high{background:rgba(16,185,129,.15);color:var(--success);}
+.tag-medium{background:rgba(245,158,11,.15);color:var(--warning);}
+.tag-low{background:rgba(239,68,68,.15);color:var(--danger);}
+.tag-role{background:rgba(124,58,237,.15);color:#a78bfa;}
+.conf-bar{width:60px;flex-shrink:0;}
+.conf-label{font-size:10px;color:var(--muted);margin-bottom:3px;text-align:right;}
+.conf-track{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.conf-fill{height:100%;border-radius:2px;transition:width .5s ease;}
+.btn-copy{background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:5px;padding:5px 10px;font-size:11px;font-family:var(--font);cursor:pointer;transition:all .2s;flex-shrink:0;}
+.btn-copy:hover{border-color:var(--accent);color:var(--accent);}
+.btn-copy.copied{border-color:var(--success);color:var(--success);}
+.empty-state{text-align:center;padding:48px 20px;color:var(--muted);display:none;}
+.empty-state.show{display:block;}
+.note{background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.15);border-radius:9px;padding:12px 16px;font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6;}
+.note strong{color:var(--accent);}
+.code{font-family:var(--mono);background:var(--surface2);padding:1px 6px;border-radius:4px;font-size:12px;color:var(--accent);}
+@media(max-width:580px){.hero h1{font-size:22px;}.input-row{flex-direction:column;}.btn{width:100%;}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo-icon">⚡</div>
+  <div class="logo-text">Lead<span>Miner</span></div>
+  <span class="badge">v2</span>
+</div>
+
+<div class="main">
+  <div class="hero">
+    <h1>B2B Email Finder<br><span>Single search or bulk CSV upload</span></h1>
+    <p>Upload your company list — we generate likely decision-maker email patterns instantly</p>
+  </div>
+
+  <div class="note" style="margin-bottom:18px;">
+    🌐 <strong>Live scraping.</strong> We crawl the company's public pages (contact / about / team) and web search for <strong>real published emails</strong> — tagged <strong style="color:var(--success)">Found</strong> with a source link. When a person's name is given we also add naming-<strong style="color:var(--warning)">Guess</strong>es, checked only at domain level (MX). Social networks block bots, so those may come back empty rather than faked.
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('single')">🔍 Single search</button>
+    <button class="tab" onclick="switchTab('bulk')">📂 Bulk CSV upload</button>
+  </div>
+
+  <!-- SINGLE -->
+  <div id="panelSingle">
+    <div class="card">
+      <div class="input-row">
+        <div class="input-wrap">
+          <span class="input-icon">🏢</span>
+          <input type="text" id="companyInput" placeholder="Company name or domain (e.g. Infosys or infosys.com)"/>
+        </div>
+        <div class="input-wrap" style="max-width:200px;">
+          <span class="input-icon">👤</span>
+          <input type="text" id="nameInput" placeholder="Decision maker name (optional)"/>
+        </div>
+        <button class="btn btn-primary" id="searchBtn" onclick="startSingle()">Find Emails</button>
+      </div>
+      <div class="options-row">
+        <span class="opt" style="cursor:default;">🌐 Crawls the company's public pages + web search for real published emails. Add a name to also get pattern guesses.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BULK -->
+  <div id="panelBulk" style="display:none;">
+    <div class="note">
+      📋 <strong>CSV columns needed:</strong>
+      <span class="code">company_name</span> (required) ·
+      <span class="code">contact_name</span> (optional) ·
+      <span class="code">domain</span> (optional) &nbsp;
+      <a href="#" onclick="dlSample();return false;" style="color:var(--accent);font-size:12px;">⬇ Download sample CSV</a>
+    </div>
+    <div class="card">
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="csvFile" accept=".csv,.txt" onchange="handleFile(event)"/>
+        <div class="upload-icon">📂</div>
+        <div class="upload-title">Drop CSV file here</div>
+        <div class="upload-sub">or click to browse — up to 10,000 rows</div>
+        <button class="btn-browse">Browse file</button>
+      </div>
+
+      <div class="col-map" id="colMap">
+        <div class="col-map-title">Map your columns</div>
+        <div class="col-map-row">
+          <div class="col-map-item">
+            <div class="col-map-label">Company name *</div>
+            <select id="mapCompany"></select>
+          </div>
+          <div class="col-map-item">
+            <div class="col-map-label">Contact name (optional)</div>
+            <select id="mapName"></select>
+          </div>
+          <div class="col-map-item">
+            <div class="col-map-label">Domain (optional)</div>
+            <select id="mapDomain"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="csv-preview" id="csvPreview">
+        <div class="preview-header">
+          <div>
+            <div class="preview-title" id="previewTitle">Preview</div>
+            <div class="preview-sub" id="previewSub"></div>
+          </div>
+          <button class="btn btn-primary" id="bulkBtn" onclick="startBulk()" style="padding:9px 18px;font-size:13px;">▶ Process all rows</button>
+        </div>
+        <div class="table-wrap">
+          <table><thead id="previewHead"></thead><tbody id="previewBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-head">
+        <span id="progressLabel" style="color:var(--muted);">Processing...</span>
+        <span id="progressPct" style="font-weight:700;color:var(--accent);">0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="progress-stats">
+        Processed: <span id="pDone">0</span> &nbsp;·&nbsp;
+        Emails found: <span id="pFound">0</span> &nbsp;·&nbsp;
+        High conf: <span id="pVerified">0</span> &nbsp;·&nbsp;
+        Remaining: <span id="pLeft">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS -->
+  <div class="status-bar" id="statusBar">
+    <div class="spinner"></div>
+    <div class="status-text" id="statusText">Working...</div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card"><div class="stat-val" id="statTotal" style="color:var(--accent)">0</div><div class="stat-label">Emails found</div></div>
+    <div class="stat-card"><div class="stat-val" id="statVerified" style="color:var(--success)">0</div><div class="stat-label">High confidence</div></div>
+    <div class="stat-card"><div class="stat-val" id="statCo" style="color:#a78bfa">0</div><div class="stat-label">Companies</div></div>
+    <div class="stat-card"><div class="stat-val" id="statConf" style="color:var(--warning)">0%</div><div class="stat-label">Avg confidence</div></div>
+  </div>
+
+  <!-- RESULTS HEADER -->
+  <div class="results-header" id="resultsHeader">
+    <div class="results-title" id="resultsTitle">Results</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span style="font-size:11px;color:var(--muted);" id="resultsCount"></span>
+      <button class="btn btn-outline" onclick="exportCSV()" style="padding:6px 13px;font-size:12px;">⬇ Export CSV</button>
+    </div>
+  </div>
+
+  <!-- EMAIL LIST -->
+  <div class="email-list" id="emailList"></div>
+  <div class="empty-state" id="emptyState">
+    <div style="font-size:40px;margin-bottom:12px;">🔍</div>
+    <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;">No emails found</div>
+    <div>Try a different company name</div>
+  </div>
+</div>
+
+<script>
+const API='/api/find'; // backend (server/server.js). Falls back to absolute if opened cross-origin.
+let allResults=[], csvRows=[], csvHeaders=[], activeTab='single';
+
+function switchTab(t){
+  activeTab=t;
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',i===(t==='single'?0:1)));
+  document.getElementById('panelSingle').style.display=t==='single'?'block':'none';
+  document.getElementById('panelBulk').style.display=t==='bulk'?'block':'none';
+  clearResults();
+}
+
+// ── Single ──────────────────────────────────────────────────
+async function startSingle(){
+  const co=document.getElementById('companyInput').value.trim();
+  const nm=document.getElementById('nameInput').value.trim();
+  if(!co){document.getElementById('companyInput').focus();return;}
+  clearResults();
+  document.getElementById('searchBtn').disabled=true;
+  showStatus('Crawling pages & searching the web for '+co+'…');
+  const emails=await processRow(co,nm,'');
+  hideStatus();
+  renderResults(emails,1);
+  showNotes();
+  document.getElementById('searchBtn').disabled=false;
+}
+function showNotes(){
+  const el=document.getElementById('emptyState');
+  if(lastNotes&&lastNotes.length){
+    el.querySelector('div:last-child').textContent=lastNotes.join(' · ');
+  }
+}
+
+// ── CSV ─────────────────────────────────────────────────────
+function handleFile(e){
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>parseCSV(ev.target.result,f.name);
+  r.readAsText(f);
+}
+const zone=document.getElementById('uploadZone');
+zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag');});
+zone.addEventListener('dragleave',()=>zone.classList.remove('drag'));
+zone.addEventListener('drop',e=>{
+  e.preventDefault();zone.classList.remove('drag');
+  const f=e.dataTransfer.files[0];
+  if(f){const r=new FileReader();r.onload=ev=>parseCSV(ev.target.result,f.name);r.readAsText(f);}
+});
+
+// RFC-4180-aware parser: handles quoted fields containing the delimiter,
+// escaped double-quotes (""), and newlines inside quotes.
+function parseCSVText(txt,delim){
+  const rows=[];let row=[],cur='',inQ=false;
+  for(let i=0;i<txt.length;i++){
+    const ch=txt[i];
+    if(inQ){
+      if(ch==='"'){ if(txt[i+1]==='"'){cur+='"';i++;} else inQ=false; }
+      else cur+=ch;
+    }else{
+      if(ch==='"')inQ=true;
+      else if(ch===delim){row.push(cur);cur='';}
+      else if(ch==='\n'){row.push(cur);rows.push(row);row=[];cur='';}
+      else if(ch==='\r'){/* ignore */}
+      else cur+=ch;
+    }
+  }
+  if(cur!==''||row.length){row.push(cur);rows.push(row);}
+  return rows.map(r=>r.map(c=>c.trim()));
+}
+function parseCSV(txt,fname){
+  txt=txt.replace(/^﻿/,''); // strip BOM
+  const nl=txt.indexOf('\n');
+  const firstLine=nl>=0?txt.slice(0,nl):txt;
+  const delim=firstLine.includes('\t')?'\t':',';
+  const all=parseCSVText(txt,delim).filter(r=>r.some(c=>c!==''));
+  if(all.length<2){alert('CSV must have a header row and at least one data row.');return;}
+  csvHeaders=all[0];
+  csvRows=all.slice(1);
+  fillSelects();
+  document.getElementById('colMap').classList.add('show');
+  showPreview(fname,csvRows.length);
+}
+
+function fillSelects(){
+  ['mapCompany','mapName','mapDomain'].forEach(id=>{
+    const s=document.getElementById(id);
+    s.innerHTML='<option value="">— none —</option>'+csvHeaders.map((h,i)=>`<option value="${i}">${esc(h)}</option>`).join('');
+  });
+  autoDetect('mapCompany',['company','company_name','organization','org','business','companyname']);
+  autoDetect('mapName',   ['contact','contact_name','person','full_name','name','decision']);
+  autoDetect('mapDomain', ['domain','website','url','web','site']);
+}
+function autoDetect(id,kws){
+  const idx=csvHeaders.findIndex(h=>kws.some(k=>h.toLowerCase().includes(k)));
+  if(idx>=0)document.getElementById(id).value=idx;
+}
+function showPreview(fname,total){
+  document.getElementById('previewHead').innerHTML='<tr>'+csvHeaders.map(h=>`<th>${esc(h)}</th>`).join('')+'</tr>';
+  document.getElementById('previewBody').innerHTML=csvRows.slice(0,5).map(row=>'<tr>'+csvHeaders.map((_,i)=>`<td>${esc(row[i]||'')}</td>`).join('')+'</tr>').join('');
+  document.getElementById('previewTitle').textContent=fname;
+  document.getElementById('previewSub').textContent=`${total} rows · showing first 5`;
+  document.getElementById('csvPreview').classList.add('show');
+}
+
+// ── Bulk ────────────────────────────────────────────────────
+async function startBulk(){
+  const ci=document.getElementById('mapCompany').value;
+  if(ci===''){alert('Select the company name column first.');return;}
+  const ni=document.getElementById('mapName').value;
+  const di=document.getElementById('mapDomain').value;
+  clearResults();
+  document.getElementById('bulkBtn').disabled=true;
+  document.getElementById('progressWrap').classList.add('show');
+  const total=csvRows.length;
+  let done=0,found=0,verified=0;
+  allResults=[];
+  for(const row of csvRows){
+    const co=row[ci]||'';
+    const nm=ni!==''?(row[ni]||''):'';
+    const dm=di!==''?(row[di]||''):'';
+    if(!co.trim()){done++;continue;}
+    showStatus('Processing: '+co);
+    const emails=await processRow(co,nm,dm);
+    emails.forEach(e=>{allResults.push(e);found++;if(e.status==='high')verified++;});
+    if(emails.length>0)addCard(emails[0]);
+    done++;
+    const pct=Math.round((done/total)*100);
+    document.getElementById('progressFill').style.width=pct+'%';
+    document.getElementById('progressPct').textContent=pct+'%';
+    document.getElementById('progressLabel').textContent='Processing: '+co;
+    document.getElementById('pDone').textContent=done;
+    document.getElementById('pFound').textContent=found;
+    document.getElementById('pVerified').textContent=verified;
+    document.getElementById('pLeft').textContent=total-done;
+    await delay(55);
+  }
+  hideStatus();
+  document.getElementById('progressLabel').textContent='✓ Complete — '+done+' companies processed';
+  document.getElementById('bulkBtn').disabled=false;
+  updateStats(allResults,done);
+  document.getElementById('resultsHeader').classList.add('show');
+  document.getElementById('resultsTitle').textContent='Bulk results';
+  document.getElementById('resultsCount').textContent=allResults.length+' emails from '+done+' companies';
+}
+
+// ── Core engine — calls the real backend scraper ────────────
+let lastNotes=[];
+async function processRow(co,nm,knownDomain){
+  const qs=new URLSearchParams({company:co});
+  if(nm) qs.set('name',nm);
+  if(knownDomain) qs.set('domain',knownDomain);
+  let data;
+  try{
+    const res=await fetch(API+'?'+qs.toString());
+    data=await res.json();
+    if(data.error) throw new Error(data.error);
+  }catch(err){
+    lastNotes=['Backend unreachable — run it with:  node server/server.js  ('+err.message+')'];
+    return [];
+  }
+  lastNotes=data.notes||[];
+  const emails=(data.emails||[]).map(e=>{
+    e.status=e.real?'high':(e.confidence>=70?'medium':'low');
+    return e;
+  });
+  emails.sort((a,b)=>((b.real?1:0)-(a.real?1:0))||(b.confidence-a.confidence));
+  return emails;
+}
+
+// ── Render ───────────────────────────────────────────────────
+function renderResults(emails,companies){
+  emails.forEach(e=>addCard(e));
+  updateStats(emails,companies);
+  document.getElementById('resultsHeader').classList.add('show');
+  document.getElementById('resultsCount').textContent=emails.length+' results';
+  if(!emails.length)document.getElementById('emptyState').classList.add('show');
+  allResults=emails;
+}
+function addCard(item){
+  const list=document.getElementById('emailList');
+  const card=document.createElement('div');
+  card.className='email-card '+item.status;
+  card.style.cssText='opacity:0;transform:translateY(5px);transition:all .22s ease;';
+  const tc=item.real?'tag-high':item.confidence>=70?'tag-medium':'tag-low';
+  const tt=item.real?'✓ Found':'~ Guess';
+  const cc=item.confidence>=80?'var(--success)':item.confidence>=55?'var(--warning)':'var(--danger)';
+  const srcLink=item.sourceUrl?` · <a href="${esc(item.sourceUrl)}" target="_blank" rel="noopener" style="color:var(--accent);">source ↗</a>`:'';
+  const meta=item.real
+    ? `Found on ${esc(item.source||'site')}${srcLink} · ${esc(item.domain)}`
+    : `Pattern: ${esc(item.label)} · Guess (domain-checked) · ${item.confidence}% · ${esc(item.domain)}`;
+  card.innerHTML=`
+    <div class="email-main">
+      ${item.sourceCompany?`<div class="email-company">🏢 ${esc(item.sourceCompany)}</div>`:''}
+      <div class="email-addr">${esc(item.email)}<span class="tag ${tc}">${tt}</span>${item.type==='role'?'<span class="tag tag-role">Role</span>':''}</div>
+      <div class="email-meta">${meta}</div>
+    </div>
+    <div class="conf-bar">
+      <div class="conf-label">${item.confidence}%</div>
+      <div class="conf-track"><div class="conf-fill" style="width:${item.confidence}%;background:${cc}"></div></div>
+    </div>
+    <button class="btn-copy">Copy</button>`;
+  card.querySelector('.btn-copy').addEventListener('click',function(){copyEmail(this,item.email);});
+  list.appendChild(card);
+  requestAnimationFrame(()=>{card.style.opacity='1';card.style.transform='translateY(0)';});
+}
+function updateStats(emails,cos){
+  const v=emails.filter(e=>e.status==='high').length;
+  const avg=emails.length?Math.round(emails.reduce((s,e)=>s+e.confidence,0)/emails.length):0;
+  document.getElementById('statTotal').textContent=emails.length;
+  document.getElementById('statVerified').textContent=v;
+  document.getElementById('statCo').textContent=cos;
+  document.getElementById('statConf').textContent=avg+'%';
+  document.getElementById('statsRow').classList.add('show');
+}
+function clearResults(){
+  allResults=[];
+  document.getElementById('emailList').innerHTML='';
+  document.getElementById('emptyState').classList.remove('show');
+  document.getElementById('resultsHeader').classList.remove('show');
+  document.getElementById('statsRow').classList.remove('show');
+  document.getElementById('progressWrap').classList.remove('show');
+}
+
+// ── Export ───────────────────────────────────────────────────
+function exportCSV(){
+  if(!allResults.length)return;
+  const rows=[['Company','Email','Found/Guess','Confidence','Domain','Type','Source','SourceURL']];
+  allResults.forEach(e=>rows.push([e.sourceCompany||'',e.email,e.real?'Found':'Guess',e.confidence+'%',e.domain||'',e.type||'',e.source||'',e.sourceUrl||'']));
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='leadminer-'+Date.now()+'.csv';
+  a.click();
+}
+function dlSample(){
+  const s=`company_name,contact_name,industry,location\nTata Consultancy Services,Rajesh Kumar,IT,Mumbai\nInfosys Limited,Priya Sharma,Technology,Bangalore\nWipro Technologies,,Software,Hyderabad\nHCL Technologies,Arun Mehta,IT,Noida\nTech Mahindra,Sneha Patel,Telecom,Pune\nReliance Industries,,Conglomerate,Mumbai\nBajaj Auto,Vikram Singh,Manufacturing,Pune\nHDFC Bank,Anita Rao,Banking,Mumbai`;
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(s);
+  a.download='leadminer-sample.csv';
+  a.click();
+}
+
+// ── Utils ────────────────────────────────────────────────────
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function copyEmail(btn,email){
+  navigator.clipboard.writeText(email).then(()=>{
+    btn.textContent='✓ Copied';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},1400);
+  }).catch(()=>{
+    btn.textContent='Copy failed';
+    setTimeout(()=>{btn.textContent='Copy';},1400);
+  });
+}
+function showStatus(t){document.getElementById('statusBar').classList.add('show');document.getElementById('statusText').textContent=t;}
+function hideStatus(){document.getElementById('statusBar').classList.remove('show');}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+document.getElementById('companyInput').addEventListener('keydown',e=>{if(e.key==='Enter')startSingle();});
+document.getElementById('nameInput').addEventListener('keydown',e=>{if(e.key==='Enter')startSingle();});
+</script>
+</body>
+</html>
