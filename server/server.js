@@ -19,7 +19,7 @@ const server = http.createServer(async (req, res) => {
     const company = (u.searchParams.get('company') || '').trim();
     const name = (u.searchParams.get('name') || '').trim();
     const domain = (u.searchParams.get('domain') || '').trim();
-    if (!company) { res.writeHead(400); res.end(JSON.stringify({ error: 'company is required' })); return; }
+    if (!company && !domain) { res.writeHead(400); res.end(JSON.stringify({ error: 'company or domain is required' })); return; }
     try {
       const data = await findLeads({ company, name, domain });
       res.writeHead(200); res.end(JSON.stringify(data));

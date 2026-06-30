@@ -11,8 +11,8 @@ module.exports = async (req, res) => {
   const name = String(q.name || '').trim();
   const domain = String(q.domain || '').trim();
 
-  if (!company) {
-    res.status(400).json({ error: 'company is required' });
+  if (!company && !domain) {
+    res.status(400).json({ error: 'company or domain is required' });
     return;
   }
   try {

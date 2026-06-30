@@ -193,7 +193,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
         <div class="col-map-title">Map your columns</div>
         <div class="col-map-row">
           <div class="col-map-item">
-            <div class="col-map-label">Company name *</div>
+            <div class="col-map-label">Company name (optional)</div>
             <select id="mapCompany"></select>
           </div>
           <div class="col-map-item">
@@ -378,7 +378,6 @@ function showPreview(fname,total){
 // ── Bulk ────────────────────────────────────────────────────
 async function startBulk(){
   const ci=document.getElementById('mapCompany').value;
-  if(ci===''){alert('Select the company name column first.');return;}
   const ni=document.getElementById('mapName').value;
   const di=document.getElementById('mapDomain').value;
   if(di===''){alert('Select the domain column — domain is required for bulk processing.');return;}
@@ -390,12 +389,12 @@ async function startBulk(){
   allResults=[];
   bulkSummary={processed:0,withResult:0,noResult:0,emails:0};
   for(const row of csvRows){
-    const co=row[ci]||'';
+    const co=ci!==''?(row[ci]||''):'';
     const nm=ni!==''?(row[ni]||''):'';
     const dm=row[di]||'';
-    if(!co.trim()){done++;continue;}
     if(!dm.trim()){done++;noResult++;document.getElementById('pDone').textContent=done;document.getElementById('pNone').textContent=noResult;continue;}
-    showStatus('Processing: '+co);
+    const label=co.trim()||dm.trim();
+    showStatus('Processing: '+label);
     const emails=await processRow(co,nm,dm);
     emails.forEach(e=>{allResults.push(e);found++;if(e.status==='high')verified++;addCard(e);});
     if(!emails.length)noResult++;
@@ -403,7 +402,7 @@ async function startBulk(){
     const pct=Math.round((done/total)*100);
     document.getElementById('progressFill').style.width=pct+'%';
     document.getElementById('progressPct').textContent=pct+'%';
-    document.getElementById('progressLabel').textContent='Processing: '+co;
+    document.getElementById('progressLabel').textContent='Processing: '+label;
     document.getElementById('pDone').textContent=done;
     document.getElementById('pFound').textContent=found;
     document.getElementById('pNone').textContent=noResult;
