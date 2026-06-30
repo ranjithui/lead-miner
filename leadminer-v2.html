@@ -201,7 +201,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
             <select id="mapName"></select>
           </div>
           <div class="col-map-item">
-            <div class="col-map-label">Domain (optional)</div>
+            <div class="col-map-label">Domain *</div>
             <select id="mapDomain"></select>
           </div>
         </div>
@@ -381,6 +381,7 @@ async function startBulk(){
   if(ci===''){alert('Select the company name column first.');return;}
   const ni=document.getElementById('mapName').value;
   const di=document.getElementById('mapDomain').value;
+  if(di===''){alert('Select the domain column — domain is required for bulk processing.');return;}
   clearResults();
   document.getElementById('bulkBtn').disabled=true;
   document.getElementById('progressWrap').classList.add('show');
@@ -391,8 +392,9 @@ async function startBulk(){
   for(const row of csvRows){
     const co=row[ci]||'';
     const nm=ni!==''?(row[ni]||''):'';
-    const dm=di!==''?(row[di]||''):'';
+    const dm=row[di]||'';
     if(!co.trim()){done++;continue;}
+    if(!dm.trim()){done++;noResult++;document.getElementById('pDone').textContent=done;document.getElementById('pNone').textContent=noResult;continue;}
     showStatus('Processing: '+co);
     const emails=await processRow(co,nm,dm);
     emails.forEach(e=>{allResults.push(e);found++;if(e.status==='high')verified++;addCard(e);});
